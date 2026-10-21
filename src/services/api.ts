@@ -20,7 +20,29 @@ import {
   LiveJobFilterOptions,
 } from '../types/index.js';
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000').trim().replace(/\/+$/, '');
+export function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const override = localStorage.getItem('getu_api_url');
+    if (override) return override.trim().replace(/\/+$/, '');
+  }
+
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+
+    // When running on a remote custom domain (such as job.wegeti.com, cloudflare pages, vercel)
+    // and envUrl is unset or accidentally set to localhost, automatically route to the live Render backend!
+    if (!isLocalhost && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return 'https://getu-server.onrender.com';
+    }
+  }
+
+  return envUrl || 'http://localhost:5000';
+}
+
+export const API_BASE = getApiBase();
 
 export function getActiveUserId(): string {
   try {
@@ -38,7 +60,7 @@ export function setActiveUserId(userId: string): void {
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const activeUserId = getActiveUserId();
-  const res = await fetch(`${API_BASE}${url}`, {
+  const res = await fetch(`${getApiBase()}${url}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -141,7 +163,7 @@ export const api = {
         }
       }
     }
-    return `${API_BASE}/api/jobs/export?${query.toString()}`;
+    return `${getApiBase()}/api/jobs/export?${query.toString()}`;
   },
 
   async getJob(id: string) {
@@ -202,7 +224,7 @@ export const api = {
   },
 
   getResumeDownloadUrl(id: string, format: 'pdf' | 'docx') {
-    return `${API_BASE}/api/resumes/download/${id}/${format}`;
+    return `${getApiBase()}/api/resumes/download/${id}/${format}`;
   },
 
   // --- Applications ---
@@ -304,7 +326,7 @@ export const api = {
   },
 
   getFileUrl(path?: string) {
-    return path ? `${API_BASE}${path}` : undefined;
+    return path ? `${getApiBase()}${path}` : undefined;
   },
 
   // --- Candidate Profile ---
@@ -442,7 +464,7 @@ export const api = {
       const formData = new FormData();
       formData.append('resume', input);
       if (autoSave) formData.append('autoSave', 'true');
-      const res = await fetch(`${API_BASE}/api/profile/extract-resume`, {
+      const res = await fetch(`${getApiBase()}/api/profile/extract-resume`, {
         method: 'POST',
         headers: {
           'x-user-id': getActiveUserId(),

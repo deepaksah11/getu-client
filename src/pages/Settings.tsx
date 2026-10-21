@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../services/api.js';
+import { api, getApiBase } from '../services/api.js';
 import { CardSkeleton } from '../components/Skeleton.js';
 import { useAppStore } from '../store/index.js';
 import { Save, Shield, Sliders, Trash2, Globe, Layers, Search } from 'lucide-react';
@@ -20,6 +20,7 @@ export const Settings: React.FC = () => {
   });
 
   const [form, setForm] = useState<Partial<UserPreferences>>({});
+  const [apiUrl, setApiUrl] = useState<string>(getApiBase());
 
   useEffect(() => {
     if (data?.data) {
@@ -326,6 +327,50 @@ export const Settings: React.FC = () => {
                 className="input-text"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Backend Server Connection */}
+        <div className="card p-6 border-slate-200/90 space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <Globe className="w-4 h-4 text-emerald-600" />
+            <h2 className="text-sm font-semibold text-slate-900">Backend Server Connection</h2>
+          </div>
+          <p className="text-xs text-slate-500">
+            Active backend API endpoint for this dashboard. When running on live domains (such as <code className="text-slate-800 bg-slate-100 px-1 py-0.5 rounded font-mono">job.wegeti.com</code>), it connects to Render automatically.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <input
+              type="text"
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="https://getu-server.onrender.com"
+              className="input-text text-xs font-mono max-w-md w-full"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const cleaned = apiUrl.trim().replace(/\/+$/, '');
+                localStorage.setItem('getu_api_url', cleaned);
+                addToast({ type: 'success', title: 'API URL Saved', message: `Targeting ${cleaned}. Reloading...` });
+                setTimeout(() => window.location.reload(), 600);
+              }}
+              className="btn-primary py-2 px-3 text-xs whitespace-nowrap"
+            >
+              Update API URL
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('getu_api_url');
+                setApiUrl('https://getu-server.onrender.com');
+                addToast({ type: 'info', title: 'Reset', message: 'Reset to default Render backend. Reloading...' });
+                setTimeout(() => window.location.reload(), 600);
+              }}
+              className="btn-secondary py-2 px-3 text-xs whitespace-nowrap"
+            >
+              Reset to Render
+            </button>
           </div>
         </div>
 

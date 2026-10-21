@@ -20,8 +20,7 @@ import {
   LiveJobFilterOptions,
 } from '../types/index.js';
 
-const RAW_API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:5000';
-const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000').trim().replace(/\/+$/, '');
 
 export function getActiveUserId(): string {
   try {

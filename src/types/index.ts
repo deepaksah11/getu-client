@@ -248,6 +248,26 @@ export interface ResumeVersion {
   updated_at: string;
 }
 
+export type JobVerificationStatus = 'verified_live' | 'unverified' | 'checking' | 'expired' | 'closed';
+export type RecruitmentType = 'regular' | 'bulk_hiring' | 'walk_in' | 'fresher_drive' | 'off_campus';
+export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'trainee';
+
+export interface JobSourceLink {
+  platform: string;
+  url: string;
+  is_verified?: boolean;
+  posted_at?: string;
+  direct_apply?: boolean;
+}
+
+export interface WalkInDetails {
+  dates?: string;
+  time?: string;
+  venue?: string;
+  contact_person?: string;
+  notes?: string;
+}
+
 export interface NormalizedJob {
   id: string;
   external_id: string;
@@ -265,6 +285,76 @@ export interface NormalizedJob {
   posted_at?: string;
   match?: JobMatch;
   created_at: string;
+
+  // Live Job Search & Verification Enhancements
+  company_logo?: string;
+  education_required?: string[];
+  min_experience_years?: number;
+  max_experience_years?: number;
+  min_salary?: number;
+  max_salary?: number;
+  salary_currency?: string;
+  job_type?: JobType;
+  recruitment_type?: RecruitmentType;
+  is_bulk_hiring?: boolean;
+  walk_in_details?: WalkInDetails;
+  application_deadline?: string;
+  verification_status?: JobVerificationStatus;
+  last_verified_at?: string;
+  verification_details?: {
+    http_status?: number;
+    checked_at?: string;
+    message?: string;
+    is_accessible?: boolean;
+  };
+  sources?: JobSourceLink[];
+  is_bookmarked?: boolean;
+  candidate_notes?: string;
+  application_status?: ApplicationStatus;
+  apply_mode?: 'direct_automated' | 'external_portal' | 'walk_in';
+  industry?: string;
+  company_size?: string;
+}
+
+export interface JobBookmark {
+  id: string;
+  user_id: string;
+  job_id: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface LiveJobFilterOptions {
+  keyword?: string;
+  excluded_keywords?: string[];
+  locations?: string[];
+  location?: string;
+  work_modes?: string[];
+  work_mode?: string;
+  experience_level?: 'fresher' | '0-1' | '1-2' | '2-3' | '3-5' | '5+' | 'all';
+  min_experience?: number;
+  max_experience?: number;
+  min_salary?: number;
+  max_salary?: number;
+  salary_currency?: string;
+  job_types?: string[];
+  roles?: string[];
+  technologies?: string[];
+  education?: string[];
+  company_name?: string;
+  industry?: string;
+  company_size?: string;
+  recruitment_types?: string[];
+  posted_within_days?: number;
+  platforms?: string[];
+  platform?: string;
+  verification_status?: 'verified_live' | 'unverified' | 'all';
+  only_freshers?: boolean;
+  only_bulk_hiring?: boolean;
+  only_bookmarked?: boolean;
+  sort_by?: 'newest' | 'relevance' | 'salary_high' | 'experience_low' | 'deadline';
+  limit?: number;
+  offset?: number;
 }
 
 export interface JobMatch {

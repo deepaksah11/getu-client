@@ -17,6 +17,7 @@ import {
   Readiness,
   RunProgress,
   PlatformRunSummary,
+  LiveJobFilterOptions,
 } from '../types/index.js';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -60,14 +61,87 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   // --- Jobs ---
-  async getJobs(params?: { keyword?: string; location?: string; work_mode?: string }) {
+  async getJobs(params?: LiveJobFilterOptions) {
     const query = new URLSearchParams();
-    if (params?.keyword) query.set('keyword', params.keyword);
-    if (params?.location) query.set('location', params.location);
-    if (params?.work_mode) query.set('work_mode', params.work_mode);
+    if (params) {
+      for (const [key, val] of Object.entries(params)) {
+        if (val !== undefined && val !== null && val !== '') {
+          if (Array.isArray(val)) {
+            if (val.length > 0) query.set(key, val.join(','));
+          } else {
+            query.set(key, String(val));
+          }
+        }
+      }
+    }
     return fetchJson<{ success: boolean; data: NormalizedJob[]; pagination: any }>(
       `/api/jobs?${query.toString()}`
     );
+  },
+
+  async getJobSources() {
+    return fetchJson<{
+      success: boolean;
+      data: { id: string; name: string; category: string; description: string; logoText: string; isAvailable: boolean }[];
+    }>('/api/jobs/sources');
+  },
+
+  async triggerLiveSearch(platforms?: string[]) {
+    return fetchJson<{
+      success: boolean;
+      scanned: number;
+      scanResults: any[];
+      message: string;
+    }>('/api/jobs/live-search', {
+      method: 'POST',
+      body: JSON.stringify({ platforms }),
+    });
+  },
+
+  async verifyJob(id: string) {
+    return fetchJson<{
+      success: boolean;
+      verification: { status: string; last_verified_at: string; message: string; http_status?: number };
+      data: NormalizedJob;
+    }>(`/api/jobs/${id}/verify`, { method: 'POST' });
+  },
+
+  async bookmarkJob(id: string, notes?: string) {
+    return fetchJson<{ success: boolean; bookmarked: boolean; message: string }>(
+      `/api/jobs/${id}/bookmark`,
+      { method: 'POST', body: JSON.stringify({ notes }) }
+    );
+  },
+
+  async unbookmarkJob(id: string) {
+    return fetchJson<{ success: boolean; bookmarked: boolean; message: string }>(
+      `/api/jobs/${id}/bookmark`,
+      { method: 'DELETE' }
+    );
+  },
+
+  async trackApplication(id: string, status: string, notes?: string) {
+    return fetchJson<{ success: boolean; data: Application; message: string }>(
+      `/api/jobs/${id}/track-application`,
+      { method: 'POST', body: JSON.stringify({ status, notes }) }
+    );
+  },
+
+  getJobExportUrl(filters?: LiveJobFilterOptions, format: 'csv' | 'json' = 'csv') {
+    const query = new URLSearchParams();
+    query.set('format', format);
+    if (filters) {
+      for (const [key, val] of Object.entries(filters)) {
+        if (val !== undefined && val !== null && val !== '') {
+          if (Array.isArray(val)) {
+            if (val.length > 0) query.set(key, val.join(','));
+          } else {
+            query.set(key, String(val));
+          }
+        }
+      }
+    }
+    return `${API_BASE}/api/jobs/export?${query.toString()}`;
   },
 
   async getJob(id: string) {

@@ -1,0 +1,16 @@
+# Render Blueprint Specification for getu-client
+services:
+  - type: web
+    name: getu-client
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      # SPA fallback routing rule so routes like /jobs, /dashboard work on refresh
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Set this in your Render dashboard to point to your live backend server
+      - key: VITE_API_URL
+        sync: false
